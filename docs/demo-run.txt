@@ -1,0 +1,27 @@
+
+> blaze-escrow@0.1.0 demo
+> node src/demo.js
+
+=== BlazeEscrow demo (mock network, real contract evaluation) ===
+
+Buyer   (an AI agent buying a dataset): bchtest:qpu2gnakjpzqdgnrxlgxs8kax84ly24amggzlyhp55
+Seller  (an AI agent selling it):       bchtest:qpzxtkdmu2shz6kdhdaws9f2qdu6ysam2ca9qvt36a
+Arbiter (trusted dispute resolver):     bchtest:qqrpus6nvaxsgkwfueez2m94um9awskznvup6ucdeq
+
+Escrow contract address: bchtest:pwvgyzra6faunkcqyhwy5zrm772tf69mymkyaqmcv64v2r3tnezuvrghm0pk7
+Buyer funds the escrow with 100,000 sats. Balance: 100000 sats
+
+Seller tries to grab the money directly (release signed by seller)...
+  -> REJECTED by the covenant: Escrow.cash:22 Require statement failed at input 0 in contract Escrow.cash at line 22 with the following message: only buyer or arbiter can release.
+
+Buyer confirms delivery and releases...
+  -> settled in tx 900adf6c80bc1b13d98573093e37d653efe516afb5fd4b2e1ba765b88dc65eae
+  -> seller balance: 98800 sats (escrow minus miner fee)
+
+Second escrow funded with 50,000 sats, deadline in 1 hour.
+Buyer tries to refund early...
+  -> REJECTED by the covenant: Escrow.cash:34 Require statement failed at input 0 in contract Escrow.cash at line 34 with the following message: refund needs the arbiter, or the buyer after the deadline.
+Deadline passes; buyer reclaims the funds...
+  -> settled in tx 2423352f4c2ba18c6128a399d3f5dab7cb2adb3a52106899f002b83ff0193dc4
+
+=== Demo complete: the covenant enforced every rule. ===
