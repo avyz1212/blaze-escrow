@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BlazeEscrow — Trustless Escrow on Bitcoin Cash</title>
+<link rel="stylesheet" href="style.css">
+<script src="config.js"></script>
+</head>
+<body>
+<!-- BCH BLAZE 2026 Mainnet Track banner: presentation, source code, EMBER2026 donations -->
+<div class="banner">
+  <span class="banner-tag">🔥 BCH BLAZE 2026 · Mainnet Track</span>
+  <a id="banner-presentation" target="_blank" rel="noopener">📊 Presentation</a>
+  <a id="banner-repo" target="_blank" rel="noopener">💻 Source code</a>
+  <span class="banner-donate">🗳️ Community Choice — send EMBER2026 to: <code id="banner-donation"></code></span>
+</div>
+
+<header>
+  <h1>BlazeEscrow</h1>
+  <p class="tagline">Trustless escrow for peer-to-peer and agent-to-agent payments on <strong>Bitcoin Cash</strong>.
+  A CashScript covenant holds the money — not a company, not a middleman. It can only ever pay the seller
+  on release, or the buyer on refund. Nobody can redirect it. Ever.</p>
+  <p class="mode-badge">Demo mode: fully client-side mock network. The <em>same compiled contract</em> is evaluated
+  in your browser by the real BCH script VM — rejections below are the covenant speaking. No server, wallet
+  connection or network request is needed after this page loads.</p>
+</header>
+
+<main>
+  <section class="card" id="parties-card">
+    <h2>The parties</h2>
+    <div id="parties"></div>
+  </section>
+
+  <section class="card">
+    <h2>1 · Create an escrow</h2>
+    <label>Amount (sats)
+      <select id="amount">
+        <option value="100000">100,000 sats (0.001 BCH)</option>
+        <option value="50000">50,000 sats</option>
+        <option value="250000">250,000 sats</option>
+      </select>
+    </label>
+    <label>Refund deadline
+      <select id="deadline">
+        <option value="3600">in 1 hour</option>
+        <option value="86400">in 24 hours</option>
+      </select>
+    </label>
+    <button id="create-btn">Create escrow contract</button>
+    <div id="escrow-box" class="hidden">
+      <p>Escrow address: <code id="escrow-address"></code></p>
+      <p>Status: <strong id="escrow-status"></strong> · Balance: <strong id="escrow-balance">0</strong> sats ·
+      Deadline: <span id="escrow-deadline"></span></p>
+      <button id="fund-btn">2 · Buyer funds the escrow</button>
+    </div>
+  </section>
+
+  <section class="card hidden" id="settle-card">
+    <h2>3 · Settle it — or try to break it</h2>
+    <p>Try the attacks first: a rejected attempt leaves the escrow untouched. Then settle the same escrow,
+    or create a second one to exercise the other settlement path.</p>
+    <div>
+      <button type="button" id="attack-seller-btn">Attack: seller self-release</button>
+      <button type="button" id="attack-theft-btn">Attack: pay the signer instead</button>
+      <button type="button" id="attack-early-refund-btn">Attack: early refund</button>
+    </div>
+    <label>Action
+      <select id="action">
+        <option value="release">Release (pay the seller)</option>
+        <option value="refund">Refund (pay the buyer back)</option>
+      </select>
+    </label>
+    <label>Signed by
+      <select id="signer">
+        <option value="buyer">Buyer</option>
+        <option value="seller">Seller</option>
+        <option value="arbiter">Arbiter</option>
+        <option value="stranger">A stranger</option>
+      </select>
+    </label>
+    <label>Pay the money to
+      <select id="payto">
+        <option value="correct">The rightful party</option>
+        <option value="signer">The signer (theft attempt)</option>
+      </select>
+    </label>
+    <label>For refunds: pretend the time is
+      <select id="when">
+        <option value="before">Before the deadline</option>
+        <option value="after">After the deadline</option>
+      </select>
+    </label>
+    <button id="settle-btn">Attempt settlement</button>
+    <div id="settle-result"></div>
+  </section>
+
+  <section class="card">
+    <h2>Event log</h2>
+    <ul id="log"></ul>
+  </section>
+
+  <section class="card explainer">
+    <h2>How it works</h2>
+    <ol>
+      <li>Buyer, seller and arbiter agree on a price and a deadline. Those four values create the contract address.</li>
+      <li>The buyer sends the payment to the contract address. The money is now locked by Bitcoin Cash script.</li>
+      <li><strong>Release:</strong> buyer or arbiter signs → the covenant forces payment to the seller.</li>
+      <li><strong>Refund:</strong> arbiter signs anytime, or the buyer signs after the deadline → the covenant forces payment back to the buyer.</li>
+      <li>Anything else — wrong signer, wrong recipient, too-early refund — is rejected by the network's script rules. Try it above.</li>
+    </ol>
+    <p>Why it matters: AI agents and strangers on the internet cannot open bank accounts or sue each other.
+    A covenant escrow gives them a neutral, programmable cashier that settles in seconds for a fraction of a cent —
+    exactly what Bitcoin Cash was built for.</p>
+  </section>
+</main>
+
+<footer>Built for BCH BLAZE 2026 · CashScript + Bitcoin Cash · Demo wallets are throwaway test identities.</footer>
+<noscript>This interactive demo requires JavaScript; the covenant itself runs locally in the browser.</noscript>
+<script type="module" src="bundle.js"></script>
+</body>
+</html>
