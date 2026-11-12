@@ -1,0 +1,24 @@
+{
+  "name": "blaze-escrow",
+  "version": "0.1.0",
+  "description": "BlazeEscrow — trustless escrow for P2P and agent-to-agent payments on Bitcoin Cash (BCH BLAZE 2026)",
+  "main": "index.js",
+  "scripts": {
+    "compile": "node scripts/compile.js",
+    "test": "node --test test/escrow.test.js",
+    "demo": "node src/demo.js",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@bitauth/libauth": "^3.1.0-next.8",
+    "cashscript": "^0.14.0"
+  },
+  "devDependencies": {
+    "cashc": "^0.14.0"
+  },
+  "type": "module",
+  "private": true
+}
