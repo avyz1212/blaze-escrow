@@ -1,0 +1,40 @@
+pragma cashscript ^0.14.0;
+
+// BlazeEscrow — trustless escrow for peer-to-peer and agent-to-agent payments
+// on Bitcoin Cash.
+//
+// Flow:
+//   1. Buyer and seller agree on a price and a deadline, and pick an arbiter.
+//   2. Buyer funds the contract address with the agreed amount.
+//   3. Happy path: buyer (or arbiter) releases — the money goes to the seller.
+//   4. Unhappy path: arbiter refunds anytime, or the buyer reclaims the money
+//      after the deadline passes. The seller can never take the funds, and
+//      nobody can redirect them to a third party: each function hard-codes
+//      the only output address it is allowed to pay.
+contract Escrow(pubkey buyer, pubkey seller, pubkey arbiter, int timeout) {
+
+    // Release the escrowed funds to the seller.
+    // Authorised by the buyer (goods received) or the arbiter (dispute won
+    // by the seller). Up to 3000 sats of the escrow may be spent on miner
+    // fees; everything else must land in the seller's wallet.
+    function release(sig signerSig, pubkey signer) {
+        require(checkSig(signerSig, signer), "invalid signature");
+        require(signer == buyer || signer == arbiter, "only buyer or arbiter can release");
+
+        bytes sellerLock = new LockingBytecodeP2PKH(hash160(seller));
+        require(tx.outputs[0].lockingBytecode == sellerLock, "first output must pay the seller");
+        require(tx.outputs[0].value >= tx.inputs[this.activeInputIndex].value - 3000, "seller must receive the full escrow minus at most 3000 sats of fees");
+    }
+
+    // Refund the escrowed funds to the buyer.
+    // Authorised by the arbiter at any time (dispute won by the buyer), or by
+    // the buyer once the agreed deadline (unix timestamp) has passed.
+    function refund(sig signerSig, pubkey signer) {
+        require(checkSig(signerSig, signer), "invalid signature");
+        require(signer == arbiter || (signer == buyer && tx.locktime >= timeout), "refund needs the arbiter, or the buyer after the deadline");
+
+        bytes buyerLock = new LockingBytecodeP2PKH(hash160(buyer));
+        require(tx.outputs[0].lockingBytecode == buyerLock, "first output must pay the buyer");
+        require(tx.outputs[0].value >= tx.inputs[this.activeInputIndex].value - 3000, "buyer must receive the full escrow minus at most 3000 sats of fees");
+    }
+}

@@ -1,0 +1,114 @@
+{
+  "contractName": "Escrow",
+  "constructorInputs": [
+    {
+      "name": "buyer",
+      "type": "pubkey"
+    },
+    {
+      "name": "seller",
+      "type": "pubkey"
+    },
+    {
+      "name": "arbiter",
+      "type": "pubkey"
+    },
+    {
+      "name": "timeout",
+      "type": "int"
+    }
+  ],
+  "abi": [
+    {
+      "name": "release",
+      "inputs": [
+        {
+          "name": "signerSig",
+          "type": "sig"
+        },
+        {
+          "name": "signer",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "refund",
+      "inputs": [
+        {
+          "name": "signerSig",
+          "type": "sig"
+        },
+        {
+          "name": "signer",
+          "type": "pubkey"
+        }
+      ]
+    }
+  ],
+  "bytecode": "OP_4 OP_PICK OP_0 OP_NUMEQUAL OP_IF OP_5 OP_ROLL OP_6 OP_PICK OP_CHECKSIGVERIFY OP_5 OP_PICK OP_EQUAL OP_5 OP_ROLL OP_3 OP_ROLL OP_EQUAL OP_BOOLOR OP_VERIFY 76a914 OP_SWAP OP_HASH160 OP_CAT 88ac OP_CAT OP_0 OP_OUTPUTBYTECODE OP_EQUALVERIFY OP_0 OP_OUTPUTVALUE OP_INPUTINDEX OP_UTXOVALUE b80b OP_SUB OP_GREATERTHANOREQUAL OP_NIP OP_NIP OP_ELSE OP_4 OP_ROLL OP_1 OP_NUMEQUALVERIFY OP_TXLOCKTIME OP_CHECKLOCKTIMEVERIFY OP_DROP OP_4 OP_ROLL OP_5 OP_PICK OP_CHECKSIGVERIFY OP_4 OP_PICK OP_3 OP_ROLL OP_EQUAL OP_4 OP_ROLL OP_2 OP_PICK OP_EQUAL OP_TXLOCKTIME OP_5 OP_ROLL OP_GREATERTHANOREQUAL OP_BOOLAND OP_BOOLOR OP_VERIFY 76a914 OP_SWAP OP_HASH160 OP_CAT 88ac OP_CAT OP_0 OP_OUTPUTBYTECODE OP_EQUALVERIFY OP_0 OP_OUTPUTVALUE OP_INPUTINDEX OP_UTXOVALUE b80b OP_SUB OP_GREATERTHANOREQUAL OP_NIP OP_ENDIF",
+  "source": "pragma cashscript ^0.14.0;\n\n// BlazeEscrow — trustless escrow for peer-to-peer and agent-to-agent payments\n// on Bitcoin Cash.\n//\n// Flow:\n//   1. Buyer and seller agree on a price and a deadline, and pick an arbiter.\n//   2. Buyer funds the contract address with the agreed amount.\n//   3. Happy path: buyer (or arbiter) releases — the money goes to the seller.\n//   4. Unhappy path: arbiter refunds anytime, or the buyer reclaims the money\n//      after the deadline passes. The seller can never take the funds, and\n//      nobody can redirect them to a third party: each function hard-codes\n//      the only output address it is allowed to pay.\ncontract Escrow(pubkey buyer, pubkey seller, pubkey arbiter, int timeout) {\n\n    // Release the escrowed funds to the seller.\n    // Authorised by the buyer (goods received) or the arbiter (dispute won\n    // by the seller). Up to 3000 sats of the escrow may be spent on miner\n    // fees; everything else must land in the seller's wallet.\n    function release(sig signerSig, pubkey signer) {\n        require(checkSig(signerSig, signer), \"invalid signature\");\n        require(signer == buyer || signer == arbiter, \"only buyer or arbiter can release\");\n\n        bytes sellerLock = new LockingBytecodeP2PKH(hash160(seller));\n        require(tx.outputs[0].lockingBytecode == sellerLock, \"first output must pay the seller\");\n        require(tx.outputs[0].value >= tx.inputs[this.activeInputIndex].value - 3000, \"seller must receive the full escrow minus at most 3000 sats of fees\");\n    }\n\n    // Refund the escrowed funds to the buyer.\n    // Authorised by the arbiter at any time (dispute won by the buyer), or by\n    // the buyer once the agreed deadline (unix timestamp) has passed.\n    function refund(sig signerSig, pubkey signer) {\n        require(checkSig(signerSig, signer), \"invalid signature\");\n        require(signer == arbiter || (signer == buyer && tx.locktime >= timeout), \"refund needs the arbiter, or the buyer after the deadline\");\n\n        bytes buyerLock = new LockingBytecodeP2PKH(hash160(buyer));\n        require(tx.outputs[0].lockingBytecode == buyerLock, \"first output must pay the buyer\");\n        require(tx.outputs[0].value >= tx.inputs[this.activeInputIndex].value - 3000, \"buyer must receive the full escrow minus at most 3000 sats of fees\");\n    }\n}\n",
+  "fingerprint": "3c956180b98784ffd1c3e6438af7242cc062a6f10f082c53555361070b377b57",
+  "debug": {
+    "bytecode": "5479009c63557a5679ad557987557a537a879b690376a9147ca97e0288ac7e00cd8800ccc0c602b80b94a2777767547a519dc5b175547a5579ad5479537a87547a527987c5557aa29a9b690376a9147ca97e0288ac7e00cd8800ccc0c602b80b94a27768",
+    "sourceMap": "20:4:27:5;;;;;21:25:21:34;;:36::42;;:8::66:1;22:16:22:22:0;;:::31:1;:35::41:0;;:45::52;;:35:::1;:16;:8::91;24:27:24:68:0;:60::66;:52::67:1;:27::68;;;25::25:28:0;:16::45:1;:8::97;26:27:26:28:0;:16::35:1;:49::70:0;:39::77:1;:80::84:0;:39:::1;:8::157;20:51:27:5;;:4;32::39::0;;;;:50:32:50;::::1;;33:25:33:34:0;;:36::42;;:8::66:1;34:16:34:22:0;;:26::33;;:16:::1;:38::44:0;;:48::53;;:38:::1;:57::68:0;:72::79;;:57:::1;:38;:16::80;:8::143;36:26:36:66:0;:59::64;:51::65:1;:26::66;;;37:27:37:28:0;:16::45:1;:8::95;38:27:38:28:0;:16::35:1;:49::70:0;:39::77:1;:80::84:0;:39:::1;:8::156;32:50:39:5;14:0:40:1",
+    "logs": [],
+    "requires": [
+      {
+        "ip": 13,
+        "line": 21,
+        "message": "invalid signature"
+      },
+      {
+        "ip": 23,
+        "line": 22,
+        "message": "only buyer or arbiter can release"
+      },
+      {
+        "ip": 32,
+        "line": 25,
+        "message": "first output must pay the seller"
+      },
+      {
+        "ip": 40,
+        "line": 26,
+        "message": "seller must receive the full escrow minus at most 3000 sats of fees"
+      },
+      {
+        "ip": 48,
+        "line": 32,
+        "message": "Using tx.locktime requires a non-final sequence number on the spending input"
+      },
+      {
+        "ip": 54,
+        "line": 33,
+        "message": "invalid signature"
+      },
+      {
+        "ip": 71,
+        "line": 34,
+        "message": "refund needs the arbiter, or the buyer after the deadline"
+      },
+      {
+        "ip": 80,
+        "line": 37,
+        "message": "first output must pay the buyer"
+      },
+      {
+        "ip": 88,
+        "line": 38,
+        "message": "buyer must receive the full escrow minus at most 3000 sats of fees"
+      }
+    ],
+    "sourceTags": "36:37:sc;43:45:lg;84:84:sc"
+  },
+  "compiler": {
+    "name": "cashc",
+    "version": "0.14.0",
+    "options": {
+      "enforceFunctionParameterTypes": true,
+      "enforceLocktimeGuard": true
+    }
+  },
+  "updatedAt": "2026-11-12T18:59:50.548Z"
+}
