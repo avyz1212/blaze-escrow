@@ -8,5 +8,5 @@ window.BLAZE_CONFIG = {
   repoUrl: 'https://github.com/avyz1212/blaze-escrow',
   // A mainnet CashTokens address that can receive EMBER2026 tokens
   // (used for Community Choice voting). Replace with the team's address.
-  donationAddress: 'SET_YOUR_CASHTOKENS_ADDRESS_HERE',
+  donationAddress: 'bitcoincash:zqms0cweazw3lmdyekzpsectxas4hyxjp5l3fec20j',
 };
